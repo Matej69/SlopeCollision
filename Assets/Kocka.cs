@@ -14,11 +14,11 @@ public class Kocka : MonoBehaviour {
     BoxCollider2D col;
     public LayerMask mask;
     private float speed = 2f;
-    private float gravitation = 8f;
+    private float gravitation = 3f;
     private float baseRayLength = 0.1f;
 
     float horRayDistance;
-    int horRayNum = 10;
+    int horRayNum = 30;
 
     private float skin = 0.1f;
 
@@ -50,7 +50,7 @@ public class Kocka : MonoBehaviour {
 
         // ray hit info
         bool didRayHitGround = false;
-        float longestRayHitDist = 0;
+        float shortestRayHitDist = 0;
         Vector2 normal = Vector2.zero;
         Vector2 rayPos = Vector2.zero;
 
@@ -65,26 +65,25 @@ public class Kocka : MonoBehaviour {
             {                
                 if (!didRayHitGround)
                 {
-                    longestRayHitDist = hit.distance;
+                    shortestRayHitDist = hit.distance;
                     normal = hit.normal;
                     rayPos = startRaycastPos;
                     didRayHitGround = true;
                 }
                 else
                 {
-                    longestRayHitDist = (hit.distance > longestRayHitDist) ? hit.distance : longestRayHitDist;
-                    normal = (hit.distance > longestRayHitDist) ? hit.normal : normal;
-                    rayPos = (hit.distance > longestRayHitDist) ? startRaycastPos : rayPos;
+                    shortestRayHitDist = (hit.distance < shortestRayHitDist) ? hit.distance : shortestRayHitDist;
+                    normal = (hit.distance < shortestRayHitDist) ? hit.normal : normal;
+                    rayPos = (hit.distance < shortestRayHitDist) ? startRaycastPos : rayPos;
                 }               
             }            
         }
-        Debug.DrawRay(rayPos, Vector2.down * longestRayHitDist, Color.blue);
+        Debug.DrawRay(rayPos, Vector2.down * shortestRayHitDist, Color.red);
 
-        // If collided with vertical bottom then move to that y intersection position
+        // If collided with ground
         if (didRayHitGround)
         {
-            finalPos = new Vector3(finalPos.x, finalPos.y - (longestRayHitDist - skin), 0);
-            /*
+            // move to that y intersection position
             if (hor_movement != HOR_MOVEMENT.NONE)
             {
                 // angle to rotate by
@@ -106,23 +105,20 @@ public class Kocka : MonoBehaviour {
                 else if (hor_movement == HOR_MOVEMENT.RIGHT)
                     floorDir.x *= -1;
                 floorDir.y = (sin * tx) + (cos * ty);
-                // Debug.DrawRay(hit.point, floorDir * speed * Time.deltaTime, Color.blue);
-
-                // calculate final position
-                finalPos = new Vector3(finalPos.x + floorDir.x * speed * Time.deltaTime, finalPos.y - (longestRayHitDist - skin) + floorDir.y * speed * Time.deltaTime, 0);
+                
+                finalPos = new Vector3(finalPos.x + floorDir.x * speed * Time.deltaTime, finalPos.y - (shortestRayHitDist - skin) + floorDir.y * speed * Time.deltaTime, 0);
             }
+            // if there is no horizontal movement -> move to the position of collision (place on ground)
             else
             {
-                finalPos = new Vector3(finalPos.x, finalPos.y - (longestRayHitDist - skin), 0);
-            } 
-            */
+                finalPos = new Vector3(finalPos.x, finalPos.y - (shortestRayHitDist - skin), 0);
+            }
         }
-        // Apply gravitation
+        // If there was no collision with ground -> apply gravitation force
         else
         {
             finalPos = new Vector3(finalPos.x, finalPos.y - possibleYGravAmount, 0);
         }
-
 
         // Apply final position
         transform.position = finalPos;
