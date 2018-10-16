@@ -3,6 +3,8 @@ using System.Collections;
 
 public class Kocka : MonoBehaviour {
 
+    GameObject spriteObj;
+
     enum HOR_MOVEMENT
     {
         LEFT,
@@ -13,7 +15,7 @@ public class Kocka : MonoBehaviour {
 
     BoxCollider2D col;
     public LayerMask mask;
-    private float speed = 2f;
+    private float speed = 5f;
     private float gravitation = 3f;
     private float baseRayLength = 0.1f;
 
@@ -25,6 +27,7 @@ public class Kocka : MonoBehaviour {
     void Awake()
     {
         col = transform.GetComponent<BoxCollider2D>();
+        spriteObj = transform.Find("Sprite").gameObject;
     }
 
 	// Use this for initialization
@@ -44,6 +47,13 @@ public class Kocka : MonoBehaviour {
         else
             hor_movement = HOR_MOVEMENT.NONE;
 
+        // rotate spritehor_movement
+        Vector3 spriteScale = spriteObj.transform.localScale;
+        if (hor_movement == HOR_MOVEMENT.LEFT)
+            spriteScale.x = -Mathf.Abs(spriteScale.x);
+        if (hor_movement == HOR_MOVEMENT.RIGHT)
+            spriteScale.x = Mathf.Abs(spriteScale.x);
+        spriteObj.transform.localScale = spriteScale;
 
 
         float possibleYGravAmount = gravitation * Time.deltaTime;
@@ -132,8 +142,8 @@ public class Kocka : MonoBehaviour {
 
     Vector2 GetBottomLeftRayBegin()
     {
-        return new Vector2( transform.position.x - col.size.x / 2, 
-                            transform.position.y - col.size.y / 2 + skin);
+        return new Vector2( transform.position.x - col.bounds.size.x / 2, 
+                            transform.position.y - col.bounds.size.y / 2 + skin);
     }
 
 
