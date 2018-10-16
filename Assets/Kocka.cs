@@ -38,7 +38,7 @@ public class Kocka : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {        
 
-        Vector3 finalPos = transform.position;
+        Vector2 velocityToApply = Vector2.zero;
 
         if (Input.GetKey(KeyCode.LeftArrow))
             hor_movement = HOR_MOVEMENT.LEFT;
@@ -115,23 +115,23 @@ public class Kocka : MonoBehaviour {
                 else if (hor_movement == HOR_MOVEMENT.RIGHT)
                     floorDir.x *= -1;
                 floorDir.y = (sin * tx) + (cos * ty);
-                
-                finalPos = new Vector3(finalPos.x + floorDir.x * speed * Time.deltaTime, finalPos.y - (shortestRayHitDist - skin) + floorDir.y * speed * Time.deltaTime, 0);
+
+                velocityToApply = new Vector2(floorDir.x * speed * Time.deltaTime, -(shortestRayHitDist - skin) + floorDir.y * speed * Time.deltaTime);
             }
             // if there is no horizontal movement -> move to the position of collision (place on ground)
             else
             {
-                finalPos = new Vector3(finalPos.x, finalPos.y - (shortestRayHitDist - skin), 0);
+                velocityToApply = new Vector2(0, -(shortestRayHitDist - skin));
             }
         }
         // If there was no collision with ground -> apply gravitation force
         else
         {
-            finalPos = new Vector3(finalPos.x, finalPos.y - possibleYGravAmount, 0);
+            velocityToApply = new Vector2(0, -possibleYGravAmount);
         }
 
         // Apply final position
-        transform.position = finalPos;
+        transform.position = new Vector3(transform.position.x + velocityToApply.x, transform.position.y + velocityToApply.y, transform.position.z);
 
         Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, Camera.main.transform.position.z);
     }
