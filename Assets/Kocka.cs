@@ -16,9 +16,14 @@ public class Kocka : MonoBehaviour {
     BoxCollider2D col;
     public LayerMask mask;
     private float speed = 6f;
-    private float gravitation = 10f;
-    private float jump = 2f;
-    private float baseRayLength = 0.1f;
+    public float gravitation = 15f;
+    private float gravitationToApply = 0;
+    private bool grounded = false;
+    Vector2 velocityToApply = Vector2.zero;
+
+    public float jumpDesc = 1f;
+    private float curJumpForce = 0;
+    public float maxJump = 0.2f;
 
     float horRayDistance;
     int horRayNum = 30;
@@ -35,13 +40,17 @@ public class Kocka : MonoBehaviour {
 	void Start () {
         horRayDistance = col.bounds.size.x / (horRayNum - 1);
     }
-	
-	// Update is called once per frame
-	void Update () {        
 
-        Vector2 velocityToApply = Vector2.zero;
+    // Update is called once per frame
+    void Update() {
+        
+        // handle jumping
+        velocityToApply.y += curJumpForce * Time.deltaTime;
+        curJumpForce -= jumpDesc * Time.deltaTime;
+        if (curJumpForce <= 0)
+            curJumpForce = 0;
 
-        if (Input.GetKey(KeyCode.LeftArrow))
+            if (Input.GetKey(KeyCode.LeftArrow))
         {
             hor_movement = HOR_MOVEMENT.LEFT;
             velocityToApply.x = -speed * Time.deltaTime;
@@ -65,8 +74,8 @@ public class Kocka : MonoBehaviour {
             spriteScale.x = Mathf.Abs(spriteScale.x);
         spriteObj.transform.localScale = spriteScale;
 
-
-        float possibleYGravAmount = gravitation * Time.deltaTime;
+        gravitationToApply += gravitation * Time.deltaTime;
+        float possibleYGravAmount = gravitationToApply * Time.deltaTime;
 
         // ray hit info
         bool didRayHitGround = false;
@@ -103,6 +112,16 @@ public class Kocka : MonoBehaviour {
         // If collided with ground
         if (didRayHitGround)
         {
+            gravitationToApply = 0;
+            grounded = true;
+            // If character vertical velocity is down
+            if (Input.GetKey(KeyCode.UpArrow) && grounded)
+            {
+                curJumpForce = maxJump;
+                grounded = false;
+            }
+            
+
             // move to that y intersection position
             if (hor_movement != HOR_MOVEMENT.NONE)
             {
@@ -125,19 +144,20 @@ public class Kocka : MonoBehaviour {
                 else if (hor_movement == HOR_MOVEMENT.RIGHT)
                     floorDir.x *= -1;
                 floorDir.y = (sin * tx) + (cos * ty);
-                
-                velocityToApply = new Vector2(floorDir.x * speed * Time.deltaTime, -(shortestRayHitDist - skin) + floorDir.y * speed * Time.deltaTime);
+
+                // set velocity depending on slope
+                velocityToApply = new Vector2(floorDir.x * speed * Time.deltaTime, curJumpForce + - (shortestRayHitDist - skin) + floorDir.y * speed * Time.deltaTime); 
             }
             // if there is no horizontal movement -> move to the position of collision (place on ground)
             else
             {
-                velocityToApply = new Vector2(0, -(shortestRayHitDist - skin));
+                velocityToApply = new Vector2(0, curJumpForce + - (shortestRayHitDist - skin));
             }
         }
         // If there was no collision with ground -> apply gravitation force
         else
         {
-            velocityToApply = new Vector2(velocityToApply.x, -possibleYGravAmount);
+            velocityToApply = new Vector2(velocityToApply.x, curJumpForce - possibleYGravAmount);
         }
 
         // Apply final position
