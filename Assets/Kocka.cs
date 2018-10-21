@@ -15,8 +15,9 @@ public class Kocka : MonoBehaviour {
 
     BoxCollider2D col;
     public LayerMask mask;
-    private float speed = 5f;
-    private float gravitation = 3f;
+    private float speed = 6f;
+    private float gravitation = 10f;
+    private float jump = 2f;
     private float baseRayLength = 0.1f;
 
     float horRayDistance;
@@ -41,11 +42,20 @@ public class Kocka : MonoBehaviour {
         Vector2 velocityToApply = Vector2.zero;
 
         if (Input.GetKey(KeyCode.LeftArrow))
+        {
             hor_movement = HOR_MOVEMENT.LEFT;
+            velocityToApply.x = -speed * Time.deltaTime;
+        }            
         else if (Input.GetKey(KeyCode.RightArrow))
+        {
             hor_movement = HOR_MOVEMENT.RIGHT;
+            velocityToApply.x = speed * Time.deltaTime;
+        }
         else
+        {
             hor_movement = HOR_MOVEMENT.NONE;
+            velocityToApply.x = 0;
+        }
 
         // rotate spritehor_movement
         Vector3 spriteScale = spriteObj.transform.localScale;
@@ -115,7 +125,7 @@ public class Kocka : MonoBehaviour {
                 else if (hor_movement == HOR_MOVEMENT.RIGHT)
                     floorDir.x *= -1;
                 floorDir.y = (sin * tx) + (cos * ty);
-
+                
                 velocityToApply = new Vector2(floorDir.x * speed * Time.deltaTime, -(shortestRayHitDist - skin) + floorDir.y * speed * Time.deltaTime);
             }
             // if there is no horizontal movement -> move to the position of collision (place on ground)
@@ -127,7 +137,7 @@ public class Kocka : MonoBehaviour {
         // If there was no collision with ground -> apply gravitation force
         else
         {
-            velocityToApply = new Vector2(0, -possibleYGravAmount);
+            velocityToApply = new Vector2(velocityToApply.x, -possibleYGravAmount);
         }
 
         // Apply final position
