@@ -114,6 +114,7 @@ public class Kocka : MonoBehaviour {
         {
             gravitationToApply = 0;
             grounded = true;
+            curJumpForce = 0;
             // If character vertical velocity is down
             if (Input.GetKey(KeyCode.UpArrow) && grounded)
             {
