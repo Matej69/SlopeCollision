@@ -77,13 +77,26 @@ public class Kocka : MonoBehaviour {
         gravitationToApply += gravitation * Time.deltaTime;
         float possibleYGravAmount = gravitationToApply * Time.deltaTime;
 
+
+
+
+
+
+
+
+
+
+        /**
+         * HANDLE BOTTOM COLLISION
+         */
+
         // ray hit info
         bool didRayHitGround = false;
         float shortestRayHitDist = 0;
         Vector2 normal = Vector2.zero;
         Vector2 rayPos = Vector2.zero;
 
-        // find shortest vertical ray hit
+        // find shortest vertical ray hit ground
         for (int i = 0; i < horRayNum; ++i)
         {
             Vector2 startRaycastPos = GetBottomLeftRayBegin();
@@ -109,6 +122,8 @@ public class Kocka : MonoBehaviour {
         }
         Debug.DrawRay(rayPos, Vector2.down * shortestRayHitDist, Color.red);
 
+
+        Vector2 holdVelocityForSlope;
         // If collided with ground
         if (didRayHitGround)
         {
@@ -147,19 +162,54 @@ public class Kocka : MonoBehaviour {
                 floorDir.y = (sin * tx) + (cos * ty);
 
                 // set velocity depending on slope
-                velocityToApply = new Vector2(floorDir.x * speed * Time.deltaTime, curJumpForce + - (shortestRayHitDist - skin) + floorDir.y * speed * Time.deltaTime); 
+                holdVelocityForSlope = new Vector2(floorDir.x * speed * Time.deltaTime, curJumpForce + - (shortestRayHitDist - skin) + floorDir.y * speed * Time.deltaTime); 
             }
             // if there is no horizontal movement -> move to the position of collision (place on ground)
             else
             {
-                velocityToApply = new Vector2(0, curJumpForce + - (shortestRayHitDist - skin));
+                holdVelocityForSlope = new Vector2(0, curJumpForce + - (shortestRayHitDist - skin));
             }
         }
         // If there was no collision with ground -> apply gravitation force
         else
         {
-            velocityToApply = new Vector2(velocityToApply.x, curJumpForce - possibleYGravAmount);
+            holdVelocityForSlope = new Vector2(velocityToApply.x, curJumpForce - possibleYGravAmount);
         }
+
+
+
+
+
+
+        bool didRayHitTop = false;
+        // Handle top collision
+        if (velocityToApply.y > 0)
+        {
+            // find shortest vertical ray hit ground
+            for (int i = 0; i < horRayNum; ++i)
+            {
+                Vector2 startRaycastPos = new Vector2(transform.position.x - col.bounds.size.x / 2, transform.position.y + col.bounds.size.y / 2 - skin);
+                startRaycastPos.x += horRayDistance * i;
+                // cast ray
+                RaycastHit2D hit = Physics2D.Raycast(startRaycastPos, Vector2.up, velocityToApply.y + skin, mask);
+                if (hit.collider)
+                {
+                    velocityToApply.y = -Mathf.Abs(velocityToApply.y / 2);
+                    curJumpForce = 0;
+                    didRayHitTop = true;
+                }
+            }
+        }
+
+        if (!didRayHitTop)
+            velocityToApply = holdVelocityForSlope;
+
+
+
+
+
+
+
 
         // Apply final position
         transform.position = new Vector3(transform.position.x + velocityToApply.x, transform.position.y + velocityToApply.y, transform.position.z);
