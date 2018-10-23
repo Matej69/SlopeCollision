@@ -15,7 +15,7 @@ public class Kocka : MonoBehaviour {
 
     BoxCollider2D col;
     public LayerMask mask;
-    private float speed = 6f;
+    public float speed = 6f;
     public float gravitation = 15f;
     private float gravitationToApply = 0;
     private bool grounded = false;
@@ -26,6 +26,7 @@ public class Kocka : MonoBehaviour {
     public float maxJump = 0.2f;
 
     float horRayDistance;
+    float verRayDistance;
     int horRayNum = 30;
 
     private float skin = 0.1f;
@@ -39,6 +40,7 @@ public class Kocka : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         horRayDistance = col.bounds.size.x / (horRayNum - 1);
+        verRayDistance = col.bounds.size.y / (horRayNum - 1);
     }
 
     // Update is called once per frame
@@ -76,6 +78,11 @@ public class Kocka : MonoBehaviour {
 
         gravitationToApply += gravitation * Time.deltaTime;
         float possibleYGravAmount = gravitationToApply * Time.deltaTime;
+
+        /**
+         * THIS SHIT MAKES MARIO NOT GO UP ON VERTICAL SLOPES BUT SUCKS
+         */
+        velocityToApply.y -= possibleYGravAmount;
 
 
 
@@ -118,15 +125,16 @@ public class Kocka : MonoBehaviour {
                     normal = (hit.distance < shortestRayHitDist) ? hit.normal : normal;
                     rayPos = (hit.distance < shortestRayHitDist) ? startRaycastPos : rayPos;
                 }               
-            }            
+            }
         }
-        Debug.DrawRay(rayPos, Vector2.down * shortestRayHitDist, Color.red);
 
+        Debug.Log("1. " + velocityToApply.y);
 
         Vector2 holdVelocityForSlope;
         // If collided with ground
         if (didRayHitGround)
         {
+            velocityToApply.y = 0;
             gravitationToApply = 0;
             grounded = true;
             curJumpForce = 0;
@@ -178,11 +186,13 @@ public class Kocka : MonoBehaviour {
 
 
 
+        Debug.Log("2. " + velocityToApply.y);
 
 
 
-        bool didRayHitTop = false;
+
         // Handle top collision
+        bool didRayHitTop = false;
         if (velocityToApply.y > 0)
         {
             // find shortest vertical ray hit ground
@@ -198,19 +208,52 @@ public class Kocka : MonoBehaviour {
                     curJumpForce = 0;
                     didRayHitTop = true;
                 }
+                Debug.DrawRay(startRaycastPos, Vector2.up * 5f, Color.blue);
             }
         }
 
-        if (!didRayHitTop)
+        Debug.Log("3. " + velocityToApply.y);
+
+
+        // Handle horizontal collision
+        // find shortest vertical ray hit ground
+        bool horHit = false;
+        if (velocityToApply.x != 0.0f)
+        {
+            for (int i = 0; i < horRayNum; ++i)
+            {
+                Vector2 startRaycastPos = (velocityToApply.x > 0) ? new Vector2(transform.position.x + col.bounds.size.x / 2 - skin, transform.position.y - col.bounds.size.y / 2 + skin)
+                                                                  : new Vector2(transform.position.x - col.bounds.size.x / 2 + skin, transform.position.y - col.bounds.size.y / 2 + skin);
+                Vector2 rayDir = (velocityToApply.x > 0) ? Vector2.right : Vector2.left;
+                startRaycastPos.y += verRayDistance * i;
+                // cast ray
+                RaycastHit2D hit = Physics2D.Raycast(startRaycastPos, rayDir, Mathf.Abs(velocityToApply.x) + skin, mask);
+                if (hit.collider)
+                {
+                    if (hit.normal.normalized == Vector2.right || hit.normal.normalized == Vector2.left)
+                    {
+                        velocityToApply.x = 0;
+                        horHit = true;
+                    }
+
+                }
+                // Debug.DrawRay(startRaycastPos, rayDir * 5f, Color.blue);
+            }
+        }
+
+
+        
+        // apply slope colision only if top was not hit
+        if (!didRayHitTop && !horHit)
+        {
             velocityToApply = holdVelocityForSlope;
+        }
 
 
 
 
 
-
-
-
+        Debug.Log("4. " + velocityToApply.y);
         // Apply final position
         transform.position = new Vector3(transform.position.x + velocityToApply.x, transform.position.y + velocityToApply.y, transform.position.z);
 
