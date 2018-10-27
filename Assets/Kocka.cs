@@ -12,6 +12,8 @@ public class Kocka : MonoBehaviour {
     public float gravitation = 4f;
     private bool grounded = false;
 
+    private float pushFromCellingAmount = 0.01f;
+
     private float raycastSkin = 0.0005f;
 
     Vector2 initialVelocity = Vector2.zero;
@@ -120,8 +122,13 @@ public class Kocka : MonoBehaviour {
                     slopeDirVector.y = (sin * tx) + (cos * ty);
                 }
                 // Set grounded state to true which enables jump
-                grounded = true;
+                if (rayDir == -1)
+                    grounded = true;
+                // If vertical collision was with the top then give player negative velocity.y so it doesnt get stuck into the celling
+                if (rayDir == 1)
+                    initialVelocity.y = -pushFromCellingAmount;
             }
+            // Debug rays
             Debug.DrawRay(curRayStartPos, Vector2.down * rayLength, Color.green);
             // Debug.DrawRay(new Vector2(curRayStartPos.x + 0.005f, curRayStartPos.y), new Vector2(0, initialVelocity.y), Color.red);
         }
