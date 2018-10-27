@@ -9,7 +9,7 @@ public class Kocka : MonoBehaviour {
     public LayerMask mask;
     public float walkSpeed = 6f;
 
-    public float gravitation = 10f;
+    public float gravitation = 4f;
     private bool grounded = false;
 
     private float raycastSkin = 0.0005f;
@@ -19,6 +19,8 @@ public class Kocka : MonoBehaviour {
 
     float horRayDistance;
     float verRayDistance;
+
+    public float jumpAmount = 5f;
     int horRayNum = 12;
     int vertRayNum = 12;
     
@@ -42,10 +44,21 @@ public class Kocka : MonoBehaviour {
 
         initialVelocity.y -= gravitation * Time.deltaTime;
 
+        // Set initial horizontal movement
         if (Input.GetKey(KeyCode.LeftArrow))
-            initialVelocity.x = -walkSpeed;
+            initialVelocity.x = -walkSpeed * Time.deltaTime;
         else if (Input.GetKey(KeyCode.RightArrow))
-            initialVelocity.x = walkSpeed;
+            initialVelocity.x = walkSpeed * Time.deltaTime;
+        else
+            initialVelocity.x = 0;
+
+        // Set initial vertical movement
+        if (Input.GetKey(KeyCode.UpArrow) && grounded) {
+            initialVelocity.y = jumpAmount;
+            grounded = false;
+        }
+
+
 
         VerticalVelocityCalculation();
 
@@ -106,6 +119,8 @@ public class Kocka : MonoBehaviour {
                     slopeDirVector.x = (horVelDir == -1) ? 1 : -1;
                     slopeDirVector.y = (sin * tx) + (cos * ty);
                 }
+                // Set grounded state to true which enables jump
+                grounded = true;
             }
             Debug.DrawRay(curRayStartPos, Vector2.down * rayLength, Color.green);
             // Debug.DrawRay(new Vector2(curRayStartPos.x + 0.005f, curRayStartPos.y), new Vector2(0, initialVelocity.y), Color.red);
