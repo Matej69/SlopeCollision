@@ -84,6 +84,9 @@ public class Kocka : MonoBehaviour {
 
     void VerticalVelocityCalculation()
     {
+        if (initialVelocity.y == 0)
+            return;
+
         // Applies to first and last vertical ray. It removes posibility of vert. ray hitting vertical walls(90 degree walls).
         float startPosXOffset = 0.0005f;
         // Direction of vertical velocity
@@ -142,6 +145,9 @@ public class Kocka : MonoBehaviour {
 
     void HorizontalVelocityCalculation()
     {
+        if (initialVelocity.x == 0)
+            return;
+
         // Direction of horizontal velocity
         float rayDir = Mathf.Sign(initialVelocity.x);
         // Length of horizontal velocity x component
