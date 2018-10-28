@@ -49,7 +49,6 @@ public class Kocka : MonoBehaviour {
         HorizontalVelocityCalculation();
 
         velocityToApply = initialVelocity;
-        Debug.Log(slopeDirVector);
 
         // Apply final position
         transform.position = new Vector3(transform.position.x + velocityToApply.x, transform.position.y + velocityToApply.y, transform.position.z);
@@ -84,8 +83,8 @@ public class Kocka : MonoBehaviour {
 
     void VerticalVelocityCalculation()
     {
-        if (initialVelocity.y == 0)
-            return;
+        // if (initialVelocity.y == 0)
+        //     return;
 
         // Applies to first and last vertical ray. It removes posibility of vert. ray hitting vertical walls(90 degree walls).
         float startPosXOffset = 0.0005f;
@@ -145,8 +144,8 @@ public class Kocka : MonoBehaviour {
 
     void HorizontalVelocityCalculation()
     {
-        if (initialVelocity.x == 0)
-            return;
+        // if (initialVelocity.x == 0)
+        //    return;
 
         // Direction of horizontal velocity
         float rayDir = Mathf.Sign(initialVelocity.x);
@@ -165,17 +164,30 @@ public class Kocka : MonoBehaviour {
             // Check if ray hit something
             if (rayHit)
             {
-                // Apply calculations above only if this is the shortest vertical ray
-                if (rayHit.distance < shortestRayHitDistance)
+                // If there was no slope detected just move horizontaly
+                if (slopeDirVector.y == 0.0f)
                 {
-                    shortestRayHitDistance = rayHit.distance;
-                    initialVelocity.x = rayDir * (shortestRayHitDistance - raycastSkin);
+                    // Apply calculations above only if this is the shortest vertical ray
+                    if (rayHit.distance < shortestRayHitDistance)
+                    {
+                        shortestRayHitDistance = rayHit.distance;
+                        initialVelocity.x = rayDir * (shortestRayHitDistance - raycastSkin);
+                    }
+                }
+                // If character is on slope move it in direction of that slope
+                else
+                {
+                    Debug.Log(slopeDirVector);
+                    //initialVelocity.x = slopeDirVector.x;
+                    //initialVelocity.y += slopeDirVector.y;
+                    //Debug.DrawRay(transform.position, slopeDirVector * 20, Color.green);
                 }
             }
             // Debug rays
             // Debug.DrawRay(curRayStartPos, Vector2.right * rayDir * rayLength * 10, Color.green);
             // Debug.DrawRay(new Vector2(curRayStartPos.x + 0.005f, curRayStartPos.y), new Vector2(0, initialVelocity.y), Color.red);
         }
+        Debug.DrawRay(transform.position, slopeDirVector * 20, Color.green);
     }
 
 
