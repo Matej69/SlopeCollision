@@ -54,7 +54,7 @@ public class Kocka : MonoBehaviour {
         // Apply final position
         transform.position = new Vector3(transform.position.x + velocityToApply.x, transform.position.y + velocityToApply.y, transform.position.z);
 
-        // Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, Camera.main.transform.position.z);
+        Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, Camera.main.transform.position.z);
     }
 
 
@@ -76,6 +76,9 @@ public class Kocka : MonoBehaviour {
             initialVelocity.y = jumpAmount;
             grounded = false;
         }
+
+        // Set grounded to false and if at least one vertical ray hit then set it to true
+        grounded = false;
     }
 
 
@@ -102,6 +105,8 @@ public class Kocka : MonoBehaviour {
             // Check if ray hit something
             if(rayHit)
             {
+                // Set grounded state
+                grounded = (rayDir < 0) ? true : grounded;
                 // Apply calculations above only if this is the shortest vertical ray
                 if (rayHit.distance < shortestRayHitDistance)
                 {
@@ -129,7 +134,7 @@ public class Kocka : MonoBehaviour {
                     initialVelocity.y = -pushFromCellingAmount;
             }
             // Debug rays
-            Debug.DrawRay(curRayStartPos, Vector2.down * rayLength, Color.green);
+            // Debug.DrawRay(curRayStartPos, Vector2.down * rayLength, Color.green);
             // Debug.DrawRay(new Vector2(curRayStartPos.x + 0.005f, curRayStartPos.y), new Vector2(0, initialVelocity.y), Color.red);
         }
     }
@@ -162,10 +167,9 @@ public class Kocka : MonoBehaviour {
                 }
             }
             // Debug rays
-            Debug.DrawRay(curRayStartPos, Vector2.right * rayDir * rayLength * 10, Color.green);
+            // Debug.DrawRay(curRayStartPos, Vector2.right * rayDir * rayLength * 10, Color.green);
             // Debug.DrawRay(new Vector2(curRayStartPos.x + 0.005f, curRayStartPos.y), new Vector2(0, initialVelocity.y), Color.red);
         }
-
     }
 
 
