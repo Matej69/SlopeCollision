@@ -44,6 +44,22 @@ public class Kocka : MonoBehaviour {
     // Update is called once per frame
     void Update() {
 
+        SetInitialVelocity();
+        VerticalVelocityCalculation();
+        HorizontalVelocityCalculation();
+
+        velocityToApply = initialVelocity;
+        Debug.Log(slopeDirVector);
+
+        // Apply final position
+        transform.position = new Vector3(transform.position.x + velocityToApply.x, transform.position.y + velocityToApply.y, transform.position.z);
+
+        // Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, Camera.main.transform.position.z);
+    }
+
+
+    void SetInitialVelocity()
+    {
         initialVelocity.y -= gravitation * Time.deltaTime;
 
         // Set initial horizontal movement
@@ -55,28 +71,12 @@ public class Kocka : MonoBehaviour {
             initialVelocity.x = 0;
 
         // Set initial vertical movement
-        if (Input.GetKey(KeyCode.UpArrow) && grounded) {
+        if (Input.GetKey(KeyCode.UpArrow) && grounded)
+        {
             initialVelocity.y = jumpAmount;
             grounded = false;
         }
-
-
-
-        VerticalVelocityCalculation();
-
-
-
-
-
-        velocityToApply = initialVelocity;
-        Debug.Log(slopeDirVector);
-
-        // Apply final position
-        transform.position = new Vector3(transform.position.x + velocityToApply.x, transform.position.y + velocityToApply.y, transform.position.z);
-
-        // Camera.main.transform.position = new Vector3(transform.position.x, transform.position.y, Camera.main.transform.position.z);
     }
-
 
 
     void VerticalVelocityCalculation()
@@ -130,6 +130,39 @@ public class Kocka : MonoBehaviour {
             }
             // Debug rays
             Debug.DrawRay(curRayStartPos, Vector2.down * rayLength, Color.green);
+            // Debug.DrawRay(new Vector2(curRayStartPos.x + 0.005f, curRayStartPos.y), new Vector2(0, initialVelocity.y), Color.red);
+        }
+    }
+
+
+    void HorizontalVelocityCalculation()
+    {
+        // Direction of horizontal velocity
+        float rayDir = Mathf.Sign(initialVelocity.x);
+        // Length of horizontal velocity x component
+        float rayLength = Mathf.Abs(initialVelocity.x);
+        Vector2 firstRayStartPos = new Vector2( transform.position.x + (rayDir * (col.bounds.size.x / 2 - raycastSkin)), transform.position.y - (col.bounds.size.y / 2 - raycastSkin) );
+        // Shorest ray hit distance
+        float shortestRayHitDistance = 99999.99f;
+        // Cast horizontal rays
+        for (int i = 0; i < horRayNum; ++i)
+        {
+            // Calculate start position of current ray
+            Vector2 curRayStartPos = new Vector2(firstRayStartPos.x, firstRayStartPos.y + horRayDistance * i);
+            // Cast ray
+            RaycastHit2D rayHit = Physics2D.Raycast(curRayStartPos, new Vector2(rayDir, 0), rayLength, mask);
+            // Check if ray hit something
+            if (rayHit)
+            {
+                // Apply calculations above only if this is the shortest vertical ray
+                if (rayHit.distance < shortestRayHitDistance)
+                {
+                    shortestRayHitDistance = rayHit.distance;
+                    initialVelocity.x = rayDir * (shortestRayHitDistance - raycastSkin);
+                }
+            }
+            // Debug rays
+            Debug.DrawRay(curRayStartPos, Vector2.right * rayDir * rayLength * 10, Color.green);
             // Debug.DrawRay(new Vector2(curRayStartPos.x + 0.005f, curRayStartPos.y), new Vector2(0, initialVelocity.y), Color.red);
         }
 
