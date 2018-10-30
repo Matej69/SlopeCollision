@@ -15,8 +15,7 @@ public class Kocka : MonoBehaviour {
     private float pushFromCellingAmount = 0.01f;
 
     private float raycastSkin = 0.0005f;
-
-    Vector2 initialVelocity = Vector2.zero;
+    
     Vector2 velocityToApply = Vector2.zero;
 
     float horRayDistance;
@@ -28,6 +27,7 @@ public class Kocka : MonoBehaviour {
     
 
     Vector2 slopeDirVector = Vector2.zero;
+    bool onSlope = false;
 
     void Awake()
     {
@@ -44,11 +44,11 @@ public class Kocka : MonoBehaviour {
     // Update is called once per frame
     void Update() {
 
+        onSlope = false;
+
         SetInitialVelocity();
         VerticalVelocityCalculation();
         HorizontalVelocityCalculation();
-
-        velocityToApply = initialVelocity;
 
         // Apply final position
         transform.position = new Vector3(transform.position.x + velocityToApply.x, transform.position.y + velocityToApply.y, transform.position.z);
@@ -59,22 +59,24 @@ public class Kocka : MonoBehaviour {
 
     void SetInitialVelocity()
     {
-        initialVelocity.y -= gravitation * Time.deltaTime;
-
         // Set initial horizontal movement
         if (Input.GetKey(KeyCode.LeftArrow))
-            initialVelocity.x = -walkSpeed * Time.deltaTime;
+            velocityToApply.x = -walkSpeed * Time.deltaTime;
         else if (Input.GetKey(KeyCode.RightArrow))
-            initialVelocity.x = walkSpeed * Time.deltaTime;
+            velocityToApply.x = walkSpeed * Time.deltaTime;
         else
-            initialVelocity.x = 0;
+            velocityToApply.x = 0;
+        
 
-        // Set initial vertical movement
-        if (Input.GetKey(KeyCode.UpArrow) && grounded)
+            // Set initial vertical movement
+            if (Input.GetKey(KeyCode.UpArrow) && grounded)
         {
-            initialVelocity.y = jumpAmount;
+            velocityToApply.y = jumpAmount;
             grounded = false;
         }
+
+        // Apply gravity
+        velocityToApply.y -= gravitation * Time.deltaTime;
 
         // Set grounded to false and if at least one vertical ray hit then set it to true
         grounded = false;
@@ -87,11 +89,11 @@ public class Kocka : MonoBehaviour {
         //     return;
 
         // Applies to first and last vertical ray. It removes posibility of vert. ray hitting vertical walls(90 degree walls).
-        float startPosXOffset = 0.0005f;
+        float startPosXOffset = 0; // 0.0005f;
         // Direction of vertical velocity
-        float rayDir = Mathf.Sign(initialVelocity.y);
+        float rayDir = Mathf.Sign(velocityToApply.y);
         // Length of vertical velocity y component
-        float rayLength = Mathf.Abs(initialVelocity.y);
+        float rayLength = Mathf.Abs(velocityToApply.y);
         Vector2 firstRayStartPos = new Vector2( transform.position.x - (col.bounds.size.x / 2 - raycastSkin - startPosXOffset), transform.position.y + (rayDir * (col.bounds.size.y / 2 - raycastSkin)) );
         // Shorest ray hit distance
         float shortestRayHitDistance = 99999.99f;
@@ -113,9 +115,9 @@ public class Kocka : MonoBehaviour {
                 if (rayHit.distance < shortestRayHitDistance)
                 {
                     shortestRayHitDistance = rayHit.distance;
-                    initialVelocity.y = rayDir * (shortestRayHitDistance - raycastSkin);
+                    velocityToApply.y = rayDir * (shortestRayHitDistance - raycastSkin);
                     // angle to rotate by
-                    float horVelDir = Mathf.Abs(initialVelocity.x);
+                    float horVelDir = Mathf.Abs(velocityToApply.x);
                     float up_floor_angle = 0;
                     up_floor_angle = (horVelDir == -1) ? Vector2.Angle(rayHit.normal, Vector2.right) : Vector2.Angle(rayHit.normal, Vector2.left);
                     float sin = Mathf.Sin(up_floor_angle * Mathf.Deg2Rad);
@@ -125,7 +127,7 @@ public class Kocka : MonoBehaviour {
                     float tx = slopeDirVector.x;
                     float ty = slopeDirVector.y;
                     slopeDirVector.x = (cos * tx) - (sin * ty);
-                    slopeDirVector.x = (horVelDir == -1) ? 1 : -1;
+                    slopeDirVector.x *= (horVelDir == -1) ? 1 : -1;
                     slopeDirVector.y = (sin * tx) + (cos * ty);
                 }
                 // Set grounded state to true which enables jump
@@ -133,24 +135,31 @@ public class Kocka : MonoBehaviour {
                     grounded = true;
                 // If vertical collision was with the top then give player negative velocity.y so it doesnt get stuck into the celling
                 if (rayDir == 1)
-                    initialVelocity.y = -pushFromCellingAmount;
+                    velocityToApply.y = -pushFromCellingAmount;
+                // Save onSlope state
+                if (slopeDirVector.y != 0)
+                    onSlope = true;
+                else
+                    onSlope = false;
+
             }
             // Debug rays
-            // Debug.DrawRay(curRayStartPos, Vector2.down * rayLength, Color.green);
+             Debug.DrawRay(curRayStartPos, Vector2.down * rayLength, Color.green);
             // Debug.DrawRay(new Vector2(curRayStartPos.x + 0.005f, curRayStartPos.y), new Vector2(0, initialVelocity.y), Color.red);
         }
     }
 
-
+    
     void HorizontalVelocityCalculation()
     {
+        Debug.Log("BEFORE: " + velocityToApply);
         // if (initialVelocity.x == 0)
         //    return;
 
         // Direction of horizontal velocity
-        float rayDir = Mathf.Sign(initialVelocity.x);
+        float rayDir = Mathf.Sign(velocityToApply.x);
         // Length of horizontal velocity x component
-        float rayLength = Mathf.Abs(initialVelocity.x);
+        float rayLength = Mathf.Abs(velocityToApply.x);
         Vector2 firstRayStartPos = new Vector2( transform.position.x + (rayDir * (col.bounds.size.x / 2 - raycastSkin)), transform.position.y - (col.bounds.size.y / 2 - raycastSkin) );
         // Shorest ray hit distance
         float shortestRayHitDistance = 99999.99f;
@@ -161,31 +170,33 @@ public class Kocka : MonoBehaviour {
             Vector2 curRayStartPos = new Vector2(firstRayStartPos.x, firstRayStartPos.y + horRayDistance * i);
             // Cast ray
             RaycastHit2D rayHit = Physics2D.Raycast(curRayStartPos, new Vector2(rayDir, 0), rayLength, mask);
-            // Check if ray hit something
-            if (rayHit)
+            // Check if ray hit something and character is on slope and hit angle was not vertical wall
+            /*
+            if (rayHit && !onSlope)
             {
                 // If there was no slope detected just move horizontaly
                 if (slopeDirVector.y == 0.0f)
                 {
                     // Apply calculations above only if this is the shortest vertical ray
-                    if (rayHit.distance < shortestRayHitDistance)
+                    if (rayHit.distance < shortestRayHitDistance && onSlope)
                     {
                         shortestRayHitDistance = rayHit.distance;
-                        initialVelocity.x = rayDir * (shortestRayHitDistance - raycastSkin);
+                        velocityToApply.x = rayDir * (shortestRayHitDistance - raycastSkin);
                     }
                 }
-                // If character is on slope move it in direction of that slope
-                else
-                {
-                    Debug.Log(slopeDirVector);
-                    //initialVelocity.x = slopeDirVector.x;
-                    //initialVelocity.y += slopeDirVector.y;
-                    //Debug.DrawRay(transform.position, slopeDirVector * 20, Color.green);
-                }
             }
+            */
             // Debug rays
             // Debug.DrawRay(curRayStartPos, Vector2.right * rayDir * rayLength * 10, Color.green);
             // Debug.DrawRay(new Vector2(curRayStartPos.x + 0.005f, curRayStartPos.y), new Vector2(0, initialVelocity.y), Color.red);
+        }
+        // If character is on slope move it in direction of that slope
+        if (onSlope && Input.GetKey(KeyCode.RightArrow))
+        {
+            Debug.Log(slopeDirVector);
+            velocityToApply.x = slopeDirVector.x * Time.deltaTime;
+            velocityToApply.y = slopeDirVector.y * Time.deltaTime;
+            //Debug.DrawRay(transform.position, slopeDirVector * 20, Color.green);
         }
         Debug.DrawRay(transform.position, slopeDirVector * 20, Color.green);
     }
