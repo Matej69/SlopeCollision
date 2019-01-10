@@ -76,8 +76,7 @@ public class Kocka : MonoBehaviour {
         // Apply gravity
         initialVelocity.y -= gravitation * Time.deltaTime;
 
-        // Set initial horizontal movement
-        
+        // Set initial horizontal movement    
         if (Input.GetKey(KeyCode.LeftArrow))
             initialVelocity.x = -walkSpeed * Time.deltaTime;
         else if (Input.GetKey(KeyCode.RightArrow))
@@ -85,6 +84,8 @@ public class Kocka : MonoBehaviour {
         else
             initialVelocity.x = 0;
         
+
+
         /*
         if (count++ > 4 && count < 8)
             initialVelocity.x = 0;
@@ -179,6 +180,8 @@ public class Kocka : MonoBehaviour {
         Vector2 firstRayStartPos = new Vector2( transform.position.x + (rayDir * (col.bounds.size.x / 2 - raycastSkin)), transform.position.y - (col.bounds.size.y / 2 - raycastSkin) + initialVelocity.y );
         // Shorest ray hit distance
         float shortestRayHitDistance = 99999.99f;
+        // vertical surface hit
+        bool slopeSurfaceHit = false;
         // Cast horizontal rays
         for (int i = 0; i < horRayNum; ++i)
         {
@@ -195,6 +198,7 @@ public class Kocka : MonoBehaviour {
                 {
                     shortestRayHitDistance = rayHit.distance;
                     initialVelocity.x = rayDir * (shortestRayHitDistance - raycastSkin);
+                    slopeSurfaceHit = (rayHit.normal != Vector2.left && rayHit.normal != Vector2.right) ? true : false;
                 }
             }
             //Instantiate(debugObj, new Vector2(curRayStartPos.x, curRayStartPos.y), Quaternion.identity);
@@ -205,10 +209,30 @@ public class Kocka : MonoBehaviour {
 
         // Debug.Log(grounded + ", " + slopeDirVector);
         //apply slope velocity
+        //Debug.Log(slopeDirVector)
         if (grounded && initialVelocity.x != 0 && slopeDirVector != Vector2.left && slopeDirVector != Vector2.right)
         {
             initialVelocity.x = slopeDirVector.x * walkSpeed * Time.deltaTime;
             initialVelocity.y = initialVelocity.y + slopeDirVector.y * walkSpeed * Time.deltaTime;
+            //Check if collision occures in the direction of slope movement vector
+            Vector2 curRayStartPos = new Vector2(firstRayStartPos.x, firstRayStartPos.y + raycastSkin);
+            RaycastHit2D rayHit = Physics2D.Raycast(curRayStartPos, initialVelocity.normalized, initialVelocity.magnitude, mask);
+            Debug.Log(initialVelocity.x + ", " + initialVelocity.y);
+            if (rayHit)
+            {
+                Debug.Log("HIT!");
+                if (slopeDirVector.y < 0)
+                {
+                    float rayLengthReduceFactor = rayHit.distance / initialVelocity.magnitude;
+                    initialVelocity.x *= rayLengthReduceFactor;
+                    initialVelocity.y *= rayLengthReduceFactor;
+                }
+            }
+        }
+
+        if ((slopeDirVector == Vector2.right || slopeDirVector == Vector2.left) && slopeSurfaceHit)
+        {
+            initialVelocity.y += 0.025f;
         }
 
     }
