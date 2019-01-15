@@ -180,14 +180,11 @@ public class SlopeController : MonoBehaviour {
             RaycastHit2D rayHit = Physics2D.Raycast(curRayStartPos, velocity.normalized, velocity.magnitude, mask);
             if (rayHit)
             {
-                // If surface was hit while moving down the slope then don't just move it down the slope by velocity but limit that velocity by distance of surface that was hit
+                // If surface was hit while moving down/up the slope then don't just move it down/up the slope by velocity but limit that velocity by distance of surface that was hit
                 // This removes possibility of character moving through flat surface while moving down the slope 
-                if (slopeDirVector.y < 0)
-                {
-                    float rayLengthReduceFactor = rayHit.distance / velocity.magnitude;
-                    velocity.x *= rayLengthReduceFactor;
-                    velocity.y *= rayLengthReduceFactor;
-                }
+                float rayLengthReduceFactor = rayHit.distance / velocity.magnitude;
+                velocity.x *= rayLengthReduceFactor;
+                velocity.y *= rayLengthReduceFactor;
             }
         }
 
