@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Kocka : MonoBehaviour {
+public class SlopeController : MonoBehaviour {
 
     GameObject spriteObj;
     
